@@ -8,7 +8,7 @@ Endet, wenn watch.sh die Datei RUN_DIR/ended anlegt (nach einem letzten Durchgan
 import os, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import spikes
+import spikes, telegram, youtube
 
 BUFFER = 10          # Sekunden Puffer, bis das Clip-Ende sicher aufgenommen ist
 
@@ -41,11 +41,13 @@ def main(run):
     while not os.path.exists(start_file):
         if os.path.exists(ended):
             return
+        youtube.remind(telegram.send)
         time.sleep(5)
     start = float(open(start_file).read())
     print(f"[live] Stream läuft, suche Momente...", flush=True)
     while not os.path.exists(ended):
         try:
+            youtube.remind(telegram.send)
             step(run, start)
         except Exception as e:
             print(f"[live] Fehler: {e}", flush=True)

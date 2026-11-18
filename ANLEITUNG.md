@@ -59,18 +59,21 @@ Speichern: `Strg+O`, `Enter`. Schließen: `Strg+X`.
 3. „APIs & Dienste“ → „Bibliothek“ → **YouTube Data API v3** → „Aktivieren“.
 4. „OAuth-Zustimmungsbildschirm“ / „Google Auth Platform“:
    - Nutzertyp **Extern**, App-Name `clip-watcher`, deine E-Mail.
-   - **Veröffentlichungsstatus auf „In Produktion“ setzen.** Sonst läuft die Anmeldung
-     nach 7 Tagen ab. Die Warnung „App nicht überprüft“ ist für eigene Nutzung okay.
+   - Unter „Zielgruppe“ → „Testnutzer“ die Gmail-Adresse des Kanals eintragen.
+   - Optional: „App veröffentlichen“ (In Produktion), dann läuft die Anmeldung nicht nach 7 Tagen ab
+     und in config.env `YT_TESTING=0` setzen. Kein Logo hochladen.
 5. „Clients“ / „Anmeldedaten“ → „Erstellen“ → **OAuth-Client-ID** → Typ **Desktop-App**.
    Client-ID und Client-Secret in `config.env` bei `YT_CLIENT_ID` und `YT_CLIENT_SECRET` eintragen.
-6. Anmelden (vom PC aus, mit Tunnel zum Server):
+6. Anmelden (geht auch vom iPad aus, in Termius):
    ```bash
-   ssh -L 8765:localhost:8765 root@DEINE-IP
-   cd clip-watcher && set -a && . ./config.env && set +a && venv/bin/python yt_auth.py
+   cd ~/clip-watcher && ./yt_auth.py
    ```
-   Den angezeigten Link **im Browser auf dem PC** öffnen, Google-Konto wählen,
+   Den angezeigten Link im Browser öffnen, Kanal-Konto wählen,
    bei „App nicht überprüft“ → „Erweitert“ → „Weiter zu clip-watcher“ → zulassen.
-   Den ausgegebenen `YT_REFRESH_TOKEN=...` in `config.env` eintragen.
+   Der Browser zeigt danach „Seite nicht erreichbar“. Das ist richtig so: die komplette Adresse
+   aus der Adresszeile kopieren und in Termius einfügen. Fertig, der Zugang wird automatisch gespeichert.
+   Solange die Google-App im Testmodus ist, läuft die Anmeldung nach 7 Tagen ab.
+   Der Telegram-Bot erinnert dich ab Tag 6, dann einfach `./yt_auth.py` nochmal ausführen.
 7. **Wichtig:** Google lädt Videos aus ungeprüften Projekten nur **privat** hoch.
    Damit sie öffentlich werden, die Prüfung beantragen: Google-Formular
    „YouTube API Services – Audit and Quota Extension Form“ (in der Google-Hilfe suchen).
