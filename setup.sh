@@ -12,10 +12,10 @@ apt-get update
 apt-get install -y ffmpeg python3 python3-venv git cmake build-essential fontconfig \
   fonts-noto-color-emoji fonts-montserrat
 
-echo "== Python-Umgebung (streamlink, chat-downloader, pillow)"
+echo "== Python-Umgebung (streamlink, chat-downloader, pillow, anthropic)"
 python3 -m venv "$HERE/venv"
 "$HERE/venv/bin/pip" install --upgrade pip
-"$HERE/venv/bin/pip" install streamlink chat-downloader pillow
+"$HERE/venv/bin/pip" install streamlink chat-downloader pillow anthropic
 
 echo "== whisper.cpp (Untertitel)"
 if [ ! -x "$HERE/whisper.cpp/build/bin/whisper-cli" ]; then

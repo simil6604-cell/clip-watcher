@@ -29,6 +29,8 @@ Output: `runs/<run>/clips/NN-t<seconds>.mp4` and a `.credit.txt` with the channe
 
 Tune `BIN`, `WINDOW`, `RATIO`, `MIN_MSGS` and `COOLDOWN` at the top of `spikes.py`.
 
+With `ANTHROPIC_API_KEY` set, `hooks.py` asks Claude for the hook, title and hashtags from the transcript and chat reactions (about 1 cent per clip); without it, or if the call fails, the most common chat reaction is the hook.
+
 Set the layout per channel in `streamers.txt` (`kaicenat crop`). Captions use the first installed font of Montserrat Black, Anton, Inter Black, Arial Black; install Montserrat on the server for the best look, or set `FONT=`.
 
 ## Background music (optional, off by default)

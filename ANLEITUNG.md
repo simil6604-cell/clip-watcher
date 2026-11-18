@@ -116,6 +116,12 @@ Speichern: `Strg+O`, `Enter`. Schließen: `Strg+X`.
    Wie bei TikTok: Link öffnen, zulassen, Adresse zurückkopieren.
    `IG_USER_ID=` und `IG_ACCESS_TOKEN=` in `config.env` eintragen. Das Token erneuert sich selbst.
 
+## Schritt 7b: Bessere Hooks mit Claude (optional, ca. 1 Cent pro Clip)
+1. console.anthropic.com öffnen, anmelden, unter „Billing“ Guthaben aufladen (z.B. 5 €).
+2. „API Keys“ → „Create Key“ → Namen `clip-watcher` → Schlüssel kopieren.
+3. In `config.env` bei `ANTHROPIC_API_KEY=` eintragen.
+Ohne Schlüssel nimmt das Programm einfach die häufigste Chat-Reaktion als Hook.
+
 ## Schritt 8: Testlauf (ohne zu posten)
 In `config.env` muss `DRY_RUN=1` stehen. Dann:
 ```bash

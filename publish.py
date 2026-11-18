@@ -10,7 +10,7 @@ Einstellungen (Umgebungsvariablen, z.B. in config.env):
 """
 import collections, datetime, os, random, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import edit, fx, instagram, score, spikes, telegram, tiktok, youtube
+import edit, fx, hooks, instagram, score, spikes, telegram, tiktok, youtube
 
 PLATFORMS = {"YouTube": (youtube, "#shorts"), "TikTok": (tiktok, "#fyp #viral"),
              "Instagram": (instagram, "#reels #viral")}
@@ -87,6 +87,11 @@ def main(run):
         reactions = [m[2] for m in msgs if start + sec - 5 <= m[0] < start + sec + 25]
         emoji = fx.peak_emoji(reactions)
         base = clip.rsplit(".", 1)[0]
+        # Besserer Hook + Titel von Claude (wenn ANTHROPIC_API_KEY gesetzt), sonst Chat-Hook
+        transcript = " ".join(w for _, _, w in edit.read_words(base + ".srt"))
+        ai = hooks.generate(name, platform, transcript, reactions)
+        if ai:
+            hook = ai["hook"].upper()
         short = edit.edit(clip, hook, base + ".short.mp4", layout, peak, credit,
                           peak_emoji=emoji, hook_emoji=emoji)
         # Optional: eigene Version mit Hintergrundmusik pro Plattform, wenn in music/<Plattform>/ Tracks liegen
@@ -98,10 +103,11 @@ def main(run):
                                             peak_emoji=emoji, hook_emoji=emoji, music=track)
         tag = re.sub(r"\W", "", name.lower())
         hook = "".join(ch for ch in hook if ord(ch) < 0x2600).strip() or "WAIT FOR IT"
-        title = f"{hook.title()} {emoji} | {name}"
+        title = f"{ai['title'] if ai else hook.title()} {emoji} | {name}"
+        extra_tags = [t for t in (ai["hashtags"] if ai else []) if t not in (tag, platform, "clips")]
         desc = (f"🎥 {name} live: {link}\n🙏 All credit to {name}, go follow them!\n\n"
-                f"#{tag} #{platform} #clips #funny")
-        tags = [name, tag, platform, "clips", "shorts"]
+                + " ".join(f"#{t}" for t in [tag, platform, "clips"] + (extra_tags or ["funny"])))
+        tags = [name, tag, platform, "clips", "shorts"] + extra_tags
 
         results = []
         wanted = [p.strip() for p in os.environ.get("PLATFORMS", "YouTube,TikTok,Instagram").split(",") if p.strip()]
