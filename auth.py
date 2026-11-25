@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
-"""Einmalige Anmeldung bei TikTok bzw. Instagram, um die Tokens für config.env zu bekommen.
+"""Einmalige Anmeldung bei TikTok bzw. Instagram. Der Zugang wird automatisch gespeichert (runs/tokens.json).
 Usage:  python3 auth.py tiktok      (braucht TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, REDIRECT_URI)
         python3 auth.py instagram   (braucht IG_APP_ID, IG_APP_SECRET, REDIRECT_URI)
 REDIRECT_URI muss genau so in der App eingetragen sein (https). Nach dem Login landest du
 auf dieser Seite; kopiere die komplette Adresse aus der Adresszeile hier hinein."""
 import json, os, secrets, sys, urllib.parse, urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import tokens
+
+def load_config():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.env")
+    if os.path.exists(p):
+        for line in open(p):
+            if "=" in line and not line.lstrip().startswith("#"):
+                k, v = line.strip().split("=", 1)
+                if v:
+                    os.environ.setdefault(k, v)
+
+load_config()
 
 def ask_code(url):
     print("\n1) Diese Adresse im Browser öffnen und anmelden:\n" + url)
@@ -26,7 +39,10 @@ def tiktok():
         "redirect_uri": redir, "state": secrets.token_hex(8)}))
     r = post("https://open.tiktokapis.com/v2/oauth/token/", {"client_key": key, "client_secret": secret,
              "code": code, "grant_type": "authorization_code", "redirect_uri": redir})
-    print("\nIn config.env eintragen:\nTIKTOK_REFRESH_TOKEN=" + r["refresh_token"])
+    if "refresh_token" not in r:
+        sys.exit(f"TikTok hat abgelehnt: {r}")
+    tokens.put(TIKTOK_REFRESH_TOKEN=r["refresh_token"])
+    print("\n✅ TikTok ist verbunden. Der Zugang ist gespeichert.")
 
 def instagram():
     app, secret, redir = os.environ["IG_APP_ID"], os.environ["IG_APP_SECRET"], os.environ["REDIRECT_URI"]
@@ -37,7 +53,8 @@ def instagram():
                  "grant_type": "authorization_code", "redirect_uri": redir, "code": code})
     long = json.load(urllib.request.urlopen("https://graph.instagram.com/access_token?" + urllib.parse.urlencode({
         "grant_type": "ig_exchange_token", "client_secret": secret, "access_token": short["access_token"]})))
-    print(f"\nIn config.env eintragen:\nIG_USER_ID={short['user_id']}\nIG_ACCESS_TOKEN={long['access_token']}")
+    tokens.put(IG_USER_ID=str(short["user_id"]), IG_ACCESS_TOKEN=long["access_token"], IG_REFRESHED_AT="0")
+    print("\n✅ Instagram ist verbunden. Der Zugang ist gespeichert.")
 
 if __name__ == "__main__":
     {"tiktok": tiktok, "instagram": instagram}.get(sys.argv[1] if len(sys.argv) > 1 else "", lambda: sys.exit(__doc__))()
