@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Assistent: fragt nacheinander alle Schlüssel ab, schreibt config.env und verbindet die Plattformen.
-# Usage: ./configure.sh      (Enter ohne Eingabe = Wert behalten / überspringen)
+# Usage: ./configure.sh [telegram|youtube|tiktok|claude]   (Enter ohne Eingabe = Wert behalten)
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CFG="$HERE/config.env"
@@ -31,15 +31,23 @@ ask() {  # ask NAME "Frage" [geheim]
     read -r -p "$2$hint: " val
   fi
   val="$(echo -n "$val" | tr -d '[:space:]')"
-  [ -n "$val" ] && set_key "$1" "$val"
+  if [ -n "$val" ]; then set_key "$1" "$val"; echo "   ✔ gespeichert (${#val} Zeichen)"
+  else echo "   (nichts eingegeben)"; fi
 }
 
+PART="${1:-alle}"
+if [ "$PART" = alle ] || [ "$PART" = telegram ]; then
 echo "== Telegram"
 ask TELEGRAM_TOKEN "Telegram-Bot-Token (von @BotFather) einfügen" geheim
 TOK="$(get TELEGRAM_TOKEN)"
-if [ -n "$TOK" ] && [ -z "$(get TELEGRAM_CHAT_ID)" ]; then
-  echo "Schreib deinem Bot jetzt in Telegram eine Nachricht (z.B. 'hi'), dann Enter drücken."
-  read -r _
+if [ -z "$TOK" ]; then
+  read -r -p "Kein Token erkannt. Bitte nochmal einfügen: " TOK; TOK="$(echo -n "$TOK" | tr -d '[:space:]')"
+  [ -n "$TOK" ] && set_key TELEGRAM_TOKEN "$TOK" && echo "   ✔ gespeichert (${#TOK} Zeichen)"
+fi
+if [ -n "$TOK" ]; then
+  echo "Jetzt in Telegram deinem Bot 'hi' schreiben. Danach hier NUR Enter drücken."
+  read -r extra; extra="$(echo -n "$extra" | tr -d '[:space:]')"
+  if [[ "$extra" == *:* ]]; then set_key TELEGRAM_TOKEN "$extra"; TOK="$extra"; echo "   ✔ Token übernommen"; fi
   CID="$(curl -s "https://api.telegram.org/bot$TOK/getUpdates" | "$PY" -c '
 import json, sys
 d = json.load(sys.stdin)
@@ -61,24 +69,31 @@ if [ -n "$TOK" ]; then
   fi
 fi
 
+fi
+if [ "$PART" = alle ] || [ "$PART" = youtube ]; then
 echo; echo "== YouTube"
 ask YT_CLIENT_ID "YouTube Client-ID einfügen"
 ask YT_CLIENT_SECRET "YouTube Client-Secret einfügen" geheim
 
+fi
+if [ "$PART" = alle ] || [ "$PART" = tiktok ]; then
 echo; echo "== TikTok"
 ask TIKTOK_CLIENT_KEY "TikTok Client key einfügen"
 ask TIKTOK_CLIENT_SECRET "TikTok Client secret einfügen" geheim
 [ -z "$(get REDIRECT_URI)" ] && set_key REDIRECT_URI "https://www.tiktok.com/"
 
+fi
+if [ "$PART" = alle ] || [ "$PART" = claude ]; then
 echo; echo "== Claude (optional, bessere Hooks)"
 ask ANTHROPIC_API_KEY "Claude-API-Schlüssel (Enter = überspringen)" geheim
 
+fi
 echo; echo "Gespeichert in config.env."
-if [ -n "$(get YT_CLIENT_ID)" ]; then
+if { [ "$PART" = alle ] || [ "$PART" = youtube ]; } && [ -n "$(get YT_CLIENT_ID)" ]; then
   read -r -p "Jetzt bei YouTube anmelden? (j/n): " a
   [ "$a" = j ] && "$PY" "$HERE/yt_auth.py"
 fi
-if [ -n "$(get TIKTOK_CLIENT_KEY)" ]; then
+if { [ "$PART" = alle ] || [ "$PART" = tiktok ]; } && [ -n "$(get TIKTOK_CLIENT_KEY)" ]; then
   read -r -p "Jetzt bei TikTok anmelden? (j/n): " a
   [ "$a" = j ] && "$PY" "$HERE/auth.py" tiktok
 fi
