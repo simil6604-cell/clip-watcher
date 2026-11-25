@@ -49,10 +49,16 @@ print(ids[-1] if ids else "")' 2>/dev/null)"
   if [ -n "$CID" ]; then set_key TELEGRAM_CHAT_ID "$CID"; echo "Chat-ID gefunden."
   else echo "Keine Nachricht gefunden. Token prüfen, dem Bot schreiben und ./configure.sh nochmal starten."; fi
 fi
-if [ -n "$(get TELEGRAM_CHAT_ID)" ]; then
-  curl -s -o /dev/null "https://api.telegram.org/bot$TOK/sendMessage" \
-    --data-urlencode "chat_id=$(get TELEGRAM_CHAT_ID)" --data-urlencode "text=✅ clip-watcher ist mit Telegram verbunden" \
-    && echo "Testnachricht an Telegram geschickt."
+if [ -n "$TOK" ]; then
+  ME="$(curl -s "https://api.telegram.org/bot$TOK/getMe")"
+  if ! echo "$ME" | grep -q '"ok":true'; then
+    echo "❌ Telegram kennt diesen Token nicht. Bei @BotFather mit /mybots -> Bot -> API Token neu kopieren."
+  elif [ -n "$(get TELEGRAM_CHAT_ID)" ]; then
+    R="$(curl -s "https://api.telegram.org/bot$TOK/sendMessage" \
+      --data-urlencode "chat_id=$(get TELEGRAM_CHAT_ID)" --data-urlencode "text=✅ clip-watcher ist mit Telegram verbunden")"
+    if echo "$R" | grep -q '"ok":true'; then echo "✅ Testnachricht an Telegram geschickt."
+    else echo "❌ Senden fehlgeschlagen: $R"; fi
+  fi
 fi
 
 echo; echo "== YouTube"
